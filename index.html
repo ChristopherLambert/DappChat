@@ -75,20 +75,50 @@
 
       // Obter a chave pública do destinatário
       gun.get('~@' + recipientAlias).once(data => {
+        console.log(data); // Exibe os dados para inspeção no console
+
         if (!data) {
-          console.error('Recipient not found');
-          return;
+            console.error('Recipient not found');
+            return;
         }
-        const recipientPub = data.pub;
-        // Criptografar e enviar a mensagem
-        SEA.encrypt(message, recipientPub, encryptedMessage => {
-          user.get('messages').get(recipientAlias).set({
-            from: user.is.alias,
-            message: encryptedMessage,
-            timestamp: Date.now()
-          });
-          document.getElementById('message').value = '';
+      
+        // Verifica se existe alguma propriedade no objeto data que poderia ser a chave pública
+        let recipientPub = null;
+        for (let key in data) {
+            if (data[key] && typeof data[key] === 'object' && data[key]['#']) {
+                recipientPub = data[key]['#']; // Assume que essa é a chave pública
+                break;
+            }
+        }
+      
+        // Chave Publica
+        //recipientPub = "dTald-7f-ZuN2-twuz_zZj1QkrCb5NwVc7b50ShCMdE.AEU_57LGCL1TuPzBhAr5labJOjOoBApfEkBz4-l4kwE";
+        if (recipientPub) {
+            // Criptografar e enviar a mensagem
+            SEA.encrypt(message, recipientPub, encryptedMessage => {
+            const messageObject = {
+                from: user.is.alias,
+                message: encryptedMessage,
+                timestamp: Date.now()
+            };
+
+            // Salva a mensagem no banco de dados do usuário
+            user.get('messages').get(recipientAlias).set(messageObject)
+            .then(() => {
+                console.log('Message sent successfully:', messageObject);
+                document.getElementById('message').value = ''; // Limpa o campo de mensagem após o envio
+            })
+            .catch(error => {
+              var title = 'Error sending message:';
+              var msg = error;
+
+              console.error(title, msg);
+              showError(title, msg);
+            });
         });
+        } else {
+            console.error('Public key not found');
+        }
       });
     }
 
@@ -105,6 +135,7 @@
 
     // Escutar mensagens recebidas para o usuário logado
     user.get('messages').map().on(displayMessage);
+    console.log(user);
 
     function showError(title, msg){
       Swal.fire({
