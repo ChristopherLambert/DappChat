@@ -41,6 +41,9 @@
     // Referência ao banco de dados de mensagens
     const messages = gun.get('messages');
 
+    // Rastreador de mensagens exibidas
+    const displayedMessages = new Set();
+
     // Função para adicionar uma nova mensagem
     function sendMessage() {
       const message = document.getElementById('message').value;
@@ -51,8 +54,10 @@
     }
 
     // Função para exibir mensagens
-    function displayMessage(data) {
-      if (!data || !data.text || !data.timestamp) return; // Verifique se os dados são válidos
+    function displayMessage(data, id) {
+      if (!data || !data.text || !data.timestamp || displayedMessages.has(id)) return; // Verifique se os dados são válidos e não repetidos
+
+      displayedMessages.add(id); // Marque a mensagem como exibida
 
       const messagesDiv = document.getElementById('messages');
       const messageDiv = document.createElement('div');
@@ -62,7 +67,7 @@
     }
 
     // Escute novas mensagens
-    messages.map().on(displayMessage);
+    messages.map().once((data, id) => displayMessage(data, id));
   </script>
 </body>
 </html>
