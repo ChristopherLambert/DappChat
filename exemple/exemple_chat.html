@@ -26,7 +26,6 @@
       <button onclick="sendMessage()">Send</button>
     </div>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
   <script>
@@ -39,11 +38,7 @@
       const pass = document.getElementById('password').value;
       user.create(alias, pass, ack => {
         if (ack.err) {
-          var title = 'Error signing up:';
-          var msg = ack.err;
-
-          console.error(title, msg);
-          showError(title, msg);
+          console.error('Error signing up:', ack.err);
         } else {
           signIn();
         }
@@ -56,11 +51,7 @@
       const pass = document.getElementById('password').value;
       user.auth(alias, pass, ack => {
         if (ack.err) {
-          var title = 'Error signing in:';
-          var msg = ack.err;
-
-          console.error(title, msg);
-          showError(title, msg);
+          console.error('Error signing in:', ack.err);
         } else {
           document.getElementById('chat').style.display = 'block';
         }
@@ -105,15 +96,6 @@
 
     // Escutar mensagens recebidas para o usuário logado
     user.get('messages').map().on(displayMessage);
-
-    function showError(title, msg){
-      Swal.fire({
-        icon: "error",
-        title: title,
-        text: msg,
-        // footer: '<a href="#">Why do I have this issue?</a>'
-      });
-    }
   </script>
 </body>
 </html>
