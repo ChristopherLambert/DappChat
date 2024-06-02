@@ -32,7 +32,6 @@
   <script>
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
     let user = gun.user();
-    const SEA = Gun.SEA;
 
     // Função para registrar um novo usuário
     function signUp() {
@@ -40,8 +39,11 @@
       const pass = document.getElementById('password').value;
       user.create(alias, pass, ack => {
         if (ack.err) {
-          console.error('Error signing up:', ack.err);
-          showError('Error signing up:', ack.err);
+          var title = 'Error signing up:';
+          var msg = ack.err;
+
+          console.error(title, msg);
+          showError(title, msg);
         } else {
           signIn();
         }
@@ -54,11 +56,13 @@
       const pass = document.getElementById('password').value;
       user.auth(alias, pass, ack => {
         if (ack.err) {
-          console.error('Error signing in:', ack.err);
-          showError('Error signing in:', ack.err);
+          var title = 'Error signing in:';
+          var msg = ack.err;
+
+          console.error(title, msg);
+          showError(title, msg);
         } else {
           document.getElementById('chat').style.display = 'block';
-          subscribeMessages();
         }
       });
     }
@@ -71,83 +75,74 @@
 
       // Obter a chave pública do destinatário
       gun.get('~@' + recipientAlias).once(data => {
-        console.log('Recipient data:', data);
+        console.log(data); // Exibe os dados para inspeção no console
 
         if (!data) {
             console.error('Recipient not found');
             return;
         }
       
+        // Verifica se existe alguma propriedade no objeto data que poderia ser a chave pública
         let recipientPub = null;
         for (let key in data) {
-        if (key.startsWith('~')) {
-              recipientPub = key.replace('~', '');
-              break;
-          }
+            if (data[key] && typeof data[key] === 'object' && data[key]['#']) {
+                recipientPub = data[key]['#']; // Assume que essa é a chave pública
+                break;
+            }
         }
-
+      
+        // Chave Publica
+        //recipientPub = "dTald-7f-ZuN2-twuz_zZj1QkrCb5NwVc7b50ShCMdE.AEU_57LGCL1TuPzBhAr5labJOjOoBApfEkBz4-l4kwE";
         if (recipientPub) {
-          SEA.encrypt(message, recipientPub).then(encryptedMessage => {
+            // Criptografar e enviar a mensagem
+            SEA.encrypt(message, recipientPub, encryptedMessage => {
             const messageObject = {
-              from: user.is.alias,
-              message: encryptedMessage,
-              timestamp: Date.now()
+                from: user.is.alias,
+                message: encryptedMessage,
+                timestamp: Date.now()
             };
 
-            // Salvar a mensagem no nó do destinatário
-            // gun.get('~' + recipientPub).get('messages').set(messageObject)
-            gun.get(recipientPub).get(recipientPub).set(messageObject)
-              .then(() => {
+            // Salva a mensagem no banco de dados do usuário
+            user.get('messages').get(recipientAlias).set(messageObject)
+            .then(() => {
                 console.log('Message sent successfully:', messageObject);
-                document.getElementById('message').value = '';
-              })
-              .catch(error => {
-                console.error('Error sending message:', error);
-              });
-          }).catch(error => {
-            console.error('Error encrypting message:', error);
-          });
+                document.getElementById('message').value = ''; // Limpa o campo de mensagem após o envio
+            })
+            .catch(error => {
+              var title = 'Error sending message:';
+              var msg = error;
+
+              console.error(title, msg);
+              showError(title, msg);
+            });
+        });
         } else {
-          console.error('Public key not found');
+            console.error('Public key not found');
         }
       });
     }
 
     // Função para exibir mensagens recebidas
     function displayMessage(msg, id) {
-      console.log('Received message:', msg);
-
-      SEA.decrypt(msg.message, user._.sea).then(decryptedMessage => {
-        if (decryptedMessage) {
-          const messagesDiv = document.getElementById('messages');
-          const messageDiv = document.createElement('div');
-          messageDiv.textContent = `${new Date(msg.timestamp).toLocaleTimeString()} - ${msg.from}: ${decryptedMessage}`;
-          messagesDiv.appendChild(messageDiv);
-          messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        } else {
-          console.error('Error decrypting message');
-        }
-      }).catch(error => {
-        console.error('Error decrypting message:', error);
+      SEA.decrypt(msg.message, user.pair(), decryptedMessage => {
+        const messagesDiv = document.getElementById('messages');
+        const messageDiv = document.createElement('div');
+        messageDiv.textContent = `${new Date(msg.timestamp).toLocaleTimeString()} - ${msg.from}: ${decryptedMessage}`;
+        messagesDiv.appendChild(messageDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
       });
     }
 
-    // Função para subscrever e receber mensagens
-    function subscribeMessages() {
-      const messages = gun.get(user.is.pub);
-      messages.once((data, key) => {
-        console.log('Data in messages node:', data);
-      });
-      messages.map().on((msg, id) => {
-        displayMessage(msg, id);
-      });
-    }
+    // Escutar mensagens recebidas para o usuário logado
+    user.get('messages').map().on(displayMessage);
+    console.log(user);
 
     function showError(title, msg){
       Swal.fire({
         icon: "error",
         title: title,
         text: msg,
+        // footer: '<a href="#">Why do I have this issue?</a>'
       });
     }
   </script>
