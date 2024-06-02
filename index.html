@@ -117,23 +117,36 @@
     function displayMessage(msg, id) {
       console.log('Received message:', msg);
 
-      SEA.decrypt(msg.message, user._.sea).then(decryptedMessage => {
-        if (decryptedMessage) {
-          const messagesDiv = document.getElementById('messages');
-          const messageDiv = document.createElement('div');
-          messageDiv.textContent = `${new Date(msg.timestamp).toLocaleTimeString()} - ${msg.from}: ${decryptedMessage}`;
-          messagesDiv.appendChild(messageDiv);
-          messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        } else {
-          console.error('Error decrypting message');
+            Object.keys(msg).forEach(key => {
+        // Verifica se a chave não é a chave `_`
+        if (key !== '_') {
+          // Obtém o valor cifrado da mensagem
+          const encryptedMessage = msg[key]["#"];
+        
+          // Decifra a mensagem
+          // SEA.decrypt(encryptedMessage, user._.sea).then(decryptedMessage => {
+          SEA.decrypt(encryptedMessage, user.is.pub).then(decryptedMessage => {
+            // Verifica se a mensagem foi decifrada com sucesso
+            if (decryptedMessage) {
+              // Cria um novo elemento de div para exibir a mensagem decifrada
+              const messagesDiv = document.getElementById('messages');
+              const messageDiv = document.createElement('div');
+              messageDiv.textContent = `${new Date(msg['>'][key]).toLocaleTimeString()} - ${key}: ${decryptedMessage}`;
+              messagesDiv.appendChild(messageDiv);
+              messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            } else {
+              console.error('Erro ao decifrar a mensagem:', key);
+            }
+          }).catch(error => {
+            console.error('Erro ao decifrar a mensagem:', key, error);
+          });
         }
-      }).catch(error => {
-        console.error('Error decrypting message:', error);
       });
     }
 
     // Função para subscrever e receber mensagens
     function subscribeMessages() {
+      console.log(user);
       const messages = gun.get(user.is.pub);
       messages.once((data, key) => {
         console.log('Data in messages node:', data);
