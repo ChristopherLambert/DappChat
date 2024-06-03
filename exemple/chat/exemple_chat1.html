@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gun.js Private Chat App</title>
+  <style>
+    body { font-family: Arial, sans-serif; }
+    #messages { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: scroll; }
+    #input { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Gun.js Private Chat App</h1>
+  <div>
+    <input type="text" id="username" placeholder="Username" />
+    <input type="password" id="password" placeholder="Password" />
+    <button onclick="signUp()">Sign Up</button>
+    <button onclick="signIn()">Sign In</button>
+  </div>
+  <div id="chat" style="display:none;">
+    <div id="messages"></div>
+    <div id="input">
+      <input type="text" id="recipient" placeholder="Recipient Username" />
+      <input type="text" id="message" placeholder="Type a message..." />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+  <script>
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+    let user = gun.user();
+
+    // Função para registrar um novo usuário
+    function signUp() {
+      const alias = document.getElementById('username').value;
+      const pass = document.getElementById('password').value;
+      user.create(alias, pass, ack => {
+        if (ack.err) {
+          console.error('Error signing up:', ack.err);
+        } else {
+          signIn();
+        }
+      });
+    }
+
+    // Função para autenticar um usuário existente
+    function signIn() {
+      const alias = document.getElementById('username').value;
+      const pass = document.getElementById('password').value;
+      user.auth(alias, pass, ack => {
+        if (ack.err) {
+          console.error('Error signing in:', ack.err);
+        } else {
+          document.getElementById('chat').style.display = 'block';
+        }
+      });
+    }
+
+    // Função para enviar uma mensagem privada
+    function sendMessage() {
+      const recipientAlias = document.getElementById('recipient').value;
+      const message = document.getElementById('message').value;
+      if (!recipientAlias || !message) return;
+
+      // Obter a chave pública do destinatário
+      gun.get('~@' + recipientAlias).once(data => {
+        if (!data) {
+          console.error('Recipient not found');
+          return;
+        }
+        const recipientPub = data.pub;
+        // Criptografar e enviar a mensagem
+        SEA.encrypt(message, recipientPub, encryptedMessage => {
+          user.get('messages').get(recipientAlias).set({
+            from: user.is.alias,
+            message: encryptedMessage,
+            timestamp: Date.now()
+          });
+          document.getElementById('message').value = '';
+        });
+      });
+    }
+
+    // Função para exibir mensagens recebidas
+    function displayMessage(msg, id) {
+      SEA.decrypt(msg.message, user.pair(), decryptedMessage => {
+        const messagesDiv = document.getElementById('messages');
+        const messageDiv = document.createElement('div');
+        messageDiv.textContent = `${new Date(msg.timestamp).toLocaleTimeString()} - ${msg.from}: ${decryptedMessage}`;
+        messagesDiv.appendChild(messageDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      });
+    }
+
+    // Escutar mensagens recebidas para o usuário logado
+    user.get('messages').map().on(displayMessage);
+  </script>
+</body>
+</html>
