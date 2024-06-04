@@ -8,8 +8,8 @@ const displayedMessages = new Set();
 
 // Função para registrar um novo usuário
 function signUp() {
-  const alias = document.getElementById('username').value;
-  const pass = document.getElementById('password').value;
+  const alias = $('#username').val();
+  const pass = $('#password').val();
   user.create(alias, pass, ack => {
     if (ack.err) {
       console.error('Error signing up:', ack.err);
@@ -21,8 +21,8 @@ function signUp() {
 }
 // Função para autenticar um usuário existente
 function signIn() {
-  const alias = document.getElementById('username').value;
-  const pass = document.getElementById('password').value;
+  const alias = $('#username').val();
+  const pass = $('#password').val();
   user.auth(alias, pass, ack => {
     if (ack.err) {
       console.error('Error signing in:', ack.err);
@@ -35,8 +35,8 @@ function signIn() {
 }
 // Função para enviar uma mensagem privada
 function sendMessage() {
-  const recipientAlias = document.getElementById('recipient').value;
-  const message = document.getElementById('message').value;
+  const recipientAlias = $('#recipient').val();
+  const message = $('#message').val();
   if (!recipientAlias || !message) return;
   // Obter a chave pública do destinatário
   gun.get('~@' + recipientAlias).once(data => {
@@ -65,7 +65,7 @@ function sendMessage() {
         gun.user(recipientPub).get('messages').set(messageObject)
           .then(() => {
             console.log('Message sent successfully:', messageObject);
-            document.getElementById('message').value = '';
+            $('#message').val('');
           })
           .catch(error => {
             console.error('Error sending message:', error);
@@ -93,12 +93,10 @@ function displayMessage(msg, id) {
 
               displayedMessages.add(id); // Marque a mensagem como exibida
               // Criar um novo elemento div para exibir a mensagem decifrada
-              const messagesDiv = document.getElementById('messages');
-              const messageDiv = document.createElement('div');
               const time = new Date(msg.timestamp).toLocaleTimeString();
-              messageDiv.textContent = `${time} - ${msg.from}: ${decryptedMessage}`;
-              messagesDiv.appendChild(messageDiv);
-              messagesDiv.scrollTop = messagesDiv.scrollHeight;
+              const messageDiv = $('<div>').text(`${time} - ${msg.from}: ${decryptedMessage}`);
+              $('#messages').append(messageDiv);
+              $('#messages').scrollTop($('#messages')[0].scrollHeight);
           } else {
               console.error('Erro ao decifrar a mensagem:', msg);
           }
@@ -133,8 +131,8 @@ function showError(title, msg){
 // Função de logout
 function logout() {
   user.leave();
-  document.getElementById('chat').style.display = 'none';
-  document.querySelector('.auth-container').style.display = 'block';
+  $('#chat').hide();
+  $('.auth-container').show();
 }
 
 // Lembrar estado de autenticação entre recarregamentos de página
