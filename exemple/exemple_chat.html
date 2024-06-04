@@ -96,7 +96,6 @@
             };
 
             // Salvar a mensagem no nó do destinatário
-            // gun.get('~' + recipientPub).get('messages').set(messageObject)
             gun.user(recipientPub).get('messages').set(messageObject)
               .then(() => {
                 console.log('Message sent successfully:', messageObject);
@@ -143,21 +142,21 @@
       } else {
           console.error('Mensagem inválida:', msg);
       }
-  }
+    }
 
     // Função para subscrever e receber mensagens
     function subscribeMessages() {
-      console.log(user);
       const userPub = user.is.pub;
 
       console.log('Subscribed to messages for user:', userPub);
-        // messages.once((data, key) => {
-        //    console.log('Data in messages node:', data);
-        // });
-       // Acessar o nó de mensagens do usuário atual
-       gun.user(userPub).get('messages').map().on((msg, id) => {
+      // messages.once((data, key) => {
+      //    console.log('Data in messages node:', data);
+      // });
+
+      // Acessar o nó de mensagens do usuário atual
+      gun.user(userPub).get('messages').map().on((msg, id) => {
            displayMessage(msg);
-       });
+      });
     }
 
     function showError(title, msg){
