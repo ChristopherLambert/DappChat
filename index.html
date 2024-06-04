@@ -20,6 +20,7 @@
       <input type="text" id="recipient" placeholder="Recipient Username" />
       <input type="text" id="message" placeholder="Type a message..." />
       <button onclick="sendMessage()">Send</button>
+      <button onclick="logout()">Logout</button>
     </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -162,6 +163,12 @@
         title: title,
         text: msg,
       });
+    }
+    // Função de logout
+    function logout() {
+      user.leave();
+      document.getElementById('chat').style.display = 'none';
+      document.querySelector('.auth-container').style.display = 'block';
     }
   </script>
 </body>
