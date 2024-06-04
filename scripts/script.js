@@ -10,6 +10,8 @@ const displayedMessages = new Set();
 function signUp() {
   const alias = $('#username').val();
   const pass = $('#password').val();
+
+  // showLoading("Sing Up", "Loading ...");
   user.create(alias, pass, ack => {
     if (ack.err) {
       console.error('Error signing up:', ack.err);
@@ -23,6 +25,8 @@ function signUp() {
 function signIn() {
   const alias = $('#username').val();
   const pass = $('#password').val();
+
+  showLoading("Sing In", "Loading ...");
   user.auth(alias, pass, ack => {
     if (ack.err) {
       console.error('Error signing in:', ack.err);
@@ -124,6 +128,18 @@ function subscribeMessages() {
        displayMessage(msg, id);
    });
 }
+function showLoading(title, msg){
+  // Swal.showLoading();
+
+  Swal.fire({
+    title: title,
+    html: msg,
+    didOpen: () => {
+      Swal.showLoading();
+    }
+  })
+}
+
 function showError(title, msg){
   Swal.fire({
     icon: "error",
