@@ -137,3 +137,17 @@ function logout() {
 
 // Lembrar estado de autenticação entre recarregamentos de página
 // user.recall({ sessionStorage: true });
+
+// Habilitar/Desabilitar botões de Sign Up e Sign In
+function toggleAuthButtons() {
+    const username = $('#username').val();
+    const password = $('#password').val();
+    if (username && password) {
+        $('#signup-button, #signin-button').prop('disabled', false);
+    } else {
+        $('#signup-button, #signin-button').prop('disabled', true);
+    }
+}
+
+toggleAuthButtons();
+$('#username, #password').on('input', toggleAuthButtons);
