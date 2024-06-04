@@ -4,11 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gun.js Private Chat App</title>
-  <style>
-    body { font-family: Arial, sans-serif; }
-    #messages { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: scroll; }
-    #input { margin-top: 10px; }
-  </style>
+  <link rel="stylesheet" type="text/css" href="style/style.css" />
 </head>
 <body>
   <h1>Gun.js Private Chat App</h1>
@@ -34,7 +30,7 @@
     let user = gun.user();
     const SEA = Gun.SEA;
     var pair = SEA.pair();
-    
+
     // Função para registrar um novo usuário
     function signUp() {
       const alias = document.getElementById('username').value;
