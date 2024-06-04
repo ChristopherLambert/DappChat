@@ -1,3 +1,5 @@
 # DappChat 
 
 CHAT USANDO GUN.JS, UM BANCO DE DADOS TOTALMENTE DESCENTRALIZADO
+
+![DappChat](./asset/DappChat.png)
