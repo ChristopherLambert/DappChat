@@ -129,3 +129,6 @@ function logout() {
   document.getElementById('chat').style.display = 'none';
   document.querySelector('.auth-container').style.display = 'block';
 }
+
+// Lembrar estado de autenticação entre recarregamentos de página
+// user.recall({ sessionStorage: true });
