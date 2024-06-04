@@ -2,6 +2,10 @@ const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
 let user = gun.user();
 const SEA = Gun.SEA;
 var pair = SEA.pair();
+
+// Rastreador de mensagens exibidas
+const displayedMessages = new Set();
+
 // Função para registrar um novo usuário
 function signUp() {
   const alias = document.getElementById('username').value;
@@ -75,7 +79,7 @@ function sendMessage() {
   });
 }
 // Função para exibir mensagens recebidas
-function displayMessage(msg) {
+function displayMessage(msg, id) {
   console.log('Received message:', msg);
   // Verificar se o campo "from" e "message" existem
   if (msg.from && msg.message) {
@@ -85,6 +89,9 @@ function displayMessage(msg) {
       SEA.decrypt(encryptedMessage, pair).then(decryptedMessage => {
           // Verificar se a mensagem foi decifrada com sucesso
           if (decryptedMessage) {
+              if (!msg.timestamp || displayedMessages.has(id)) return; // Verifique se os dados são válidos e não repetidos
+
+              displayedMessages.add(id); // Marque a mensagem como exibida
               // Criar um novo elemento div para exibir a mensagem decifrada
               const messagesDiv = document.getElementById('messages');
               const messageDiv = document.createElement('div');
@@ -113,7 +120,7 @@ function subscribeMessages() {
     // });
    // Acessar o nó de mensagens do usuário atual
    gun.user(userPub).get('messages').map().on((msg, id) => {
-       displayMessage(msg);
+       displayMessage(msg, id);
    });
 }
 function showError(title, msg){
