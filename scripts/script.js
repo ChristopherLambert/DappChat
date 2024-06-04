@@ -32,6 +32,7 @@ function signIn() {
       console.error('Error signing in:', ack.err);
       showError('Error signing in:', ack.err);
     } else {
+      Swal.close();
       toggleSendButtons();
       $('#recipient, #message').on('input', toggleSendButtons);
 
