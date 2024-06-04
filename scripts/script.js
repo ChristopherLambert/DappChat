@@ -28,6 +28,9 @@ function signIn() {
       console.error('Error signing in:', ack.err);
       showError('Error signing in:', ack.err);
     } else {
+      toggleSendButtons();
+      $('#recipient, #message').on('input', toggleSendButtons);
+
       document.getElementById('chat').style.display = 'block';
       subscribeMessages();
     }
@@ -147,6 +150,16 @@ function toggleAuthButtons() {
     } else {
         $('#signup-button, #signin-button').prop('disabled', true);
     }
+}
+function toggleSendButtons() {
+  const recipient = $('#recipient').val().trim();
+  const message = $('#message').val().trim();
+
+  if (recipient == "" || message == "") {
+      $('#send-button').prop('disabled', true);
+  } else {
+      $('#send-button').prop('disabled', false);
+  }
 }
 
 toggleAuthButtons();
