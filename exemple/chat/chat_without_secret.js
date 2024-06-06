@@ -46,7 +46,6 @@ function sendMessage() {
   const recipientAlias = $('#recipient').val();
   const message = $('#message').val();
   if (!recipientAlias || !message) return;
-
   // Obter a chave pública do destinatário
   gun.get('~@' + recipientAlias).once(data => {
     console.log('Recipient data:', data);
@@ -63,27 +62,25 @@ function sendMessage() {
       }
     }
     if (recipientPub) {
-      const secret = SEA.secret(recipientPub, pair);
-        SEA.encrypt(message, secret).then(encryptedMessage => {
-          const messageObject = {
-            from: user.is.alias,
-            message: encryptedMessage,
-            timestamp: Date.now()
-          };
-
-          // Salvar a mensagem no nó do destinatário
-          gun.user(recipientPub).get('messages').set(messageObject)
-            .then(() => {
-              console.log('Message sent successfully:', messageObject);
-              $('#message').val('');
-              toggleSendButtons();
-            })
-            .catch(error => {
-              console.error('Error sending message:', error);
-            });
-        }).catch(error => {
-          console.error('Error encrypting message:', error);
-        });
+      SEA.encrypt(message, pair).then(encryptedMessage => {
+        const messageObject = {
+          from: user.is.alias,
+          message: encryptedMessage,
+          timestamp: Date.now()
+        };
+        // Salvar a mensagem no nó do destinatário
+        // gun.get('~' + recipientPub).get('messages').set(messageObject)
+        gun.user(recipientPub).get('messages').set(messageObject)
+          .then(() => {
+            console.log('Message sent successfully:', messageObject);
+            $('#message').val('');
+          })
+          .catch(error => {
+            console.error('Error sending message:', error);
+          });
+      }).catch(error => {
+        console.error('Error encrypting message:', error);
+      });
     } else {
       console.error('Public key not found');
     }
@@ -92,52 +89,30 @@ function sendMessage() {
 // Função para exibir mensagens recebidas
 function displayMessage(msg, id) {
   console.log('Received message:', msg);
-  try {
-    // Obter a chave pública do remetente
-    const senderPub = gun.get('~@' + msg.from).once().then(data => {
-      let pub = null;
-      for (let key in data) {
-        if (key.startsWith('~')) {
-          pub = key.replace('~', '');
-          break;
-        }
-      }
-      return pub;
-    });
+  // Verificar se o campo "from" e "message" existem
+  if (msg.from && msg.message) {
+      // Extrair o conteúdo cifrado da mensagem
+      const encryptedMessage = msg.message;
+      // Decifrar a mensagem
+      SEA.decrypt(encryptedMessage, pair).then(decryptedMessage => {
+          // Verificar se a mensagem foi decifrada com sucesso
+          if (decryptedMessage) {
+              if (!msg.timestamp || displayedMessages.has(id)) return; // Verifique se os dados são válidos e não repetidos
 
-    if (!senderPub) {
-      console.error('Chave pública do remetente não encontrada');
-      return;
-    }
-    // Verificar se o campo "from" e "message" existem
-    if (msg.from && msg.message) {
-        // Extrair o conteúdo cifrado da mensagem
-        const encryptedMessage = msg.message;
-        // Decifrar a mensagem
-        const secret = SEA.secret(senderPub,pair);
-        SEA.decrypt(encryptedMessage, secret).then(decryptedMessage => {
-            // Verificar se a mensagem foi decifrada com sucesso
-            if (decryptedMessage) {
-                // Verifique se os dados são válidos e não repetidos
-                if (!msg.timestamp || displayedMessages.has(id)) return; 
-  
-                displayedMessages.add(id); // Marque a mensagem como exibida
-                // Criar um novo elemento div para exibir a mensagem decifrada
-                const time = new Date(msg.timestamp).toLocaleTimeString();
-                const messageDiv = $('<div>').text(`${time} - ${msg.from}: ${decryptedMessage}`);
-                $('#messages').append(messageDiv);
-                $('#messages').scrollTop($('#messages')[0].scrollHeight);
-            } else {
-                console.error('Erro ao decifrar a mensagem:', msg);
-            }
-        }).catch(error => {
-            console.error('Erro ao decifrar a mensagem:', msg, error);
-        });
-    } else {
-        console.error('Mensagem inválida:', msg);
-    }
-  } catch (error) {
-    console.error('Erro ao descriptografar mensagem:', error);
+              displayedMessages.add(id); // Marque a mensagem como exibida
+              // Criar um novo elemento div para exibir a mensagem decifrada
+              const time = new Date(msg.timestamp).toLocaleTimeString();
+              const messageDiv = $('<div>').text(`${time} - ${msg.from}: ${decryptedMessage}`);
+              $('#messages').append(messageDiv);
+              $('#messages').scrollTop($('#messages')[0].scrollHeight);
+          } else {
+              console.error('Erro ao decifrar a mensagem:', msg);
+          }
+      }).catch(error => {
+          console.error('Erro ao decifrar a mensagem:', msg, error);
+      });
+  } else {
+      console.error('Mensagem inválida:', msg);
   }
 }
 
@@ -178,7 +153,6 @@ function logout() {
   user.leave();
   $('#chat').hide();
   $('.auth-container').show();
-  $('#messages').val(" ");
 }
 
 // Lembrar estado de autenticação entre recarregamentos de página
